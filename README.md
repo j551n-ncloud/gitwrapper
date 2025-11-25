@@ -150,7 +150,7 @@ gw undo
 
 ## Requirements
 
-- Python 3.7+
+- Python 3.9+
 - Git installed and in PATH
 - Terminal with ANSI color support (optional)
 
