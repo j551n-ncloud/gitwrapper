@@ -127,7 +127,7 @@
 - **Test Coverage**: 10% (focused on core)
 - **Test Count**: 25
 - **Documentation Pages**: 7
-- **Supported Python**: 3.7+
+- **Supported Python**: 3.9+
 - **Platforms**: Linux, macOS, Windows (WSL)
 - **Dependencies**: 0 (runtime)
 

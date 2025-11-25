@@ -107,7 +107,7 @@ gw tag
 - **Test Files**: 5
 - **Test Cases**: 25
 - **Documentation Files**: 7
-- **Python Version**: 3.7+
+- **Python Version**: 3.9+
 - **Dependencies**: 0 (runtime), 5 (dev)
 
 ## 🎨 Code Quality Tools

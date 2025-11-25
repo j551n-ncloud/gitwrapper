@@ -14,7 +14,7 @@ gw --help
 
 ### 1. Prerequisites
 
-- Python 3.7 or higher
+- Python 3.9 or higher
 - Git installed and in PATH
 - pip (Python package manager)
 
