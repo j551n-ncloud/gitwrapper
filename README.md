@@ -25,12 +25,31 @@ A user-friendly, feature-rich interactive interface for Git operations with adva
 
 ## Installation
 
+### From PyPI (when published)
+```bash
+pip install gitwrapper
+```
+
+### From Source
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/gitwrapper.git
+cd gitwrapper
+
+# Install in development mode
+pip install -e .
+
+# Or install with dev dependencies
+pip install -e ".[dev]"
+```
+
+### Direct Script Usage
 ```bash
 # Make executable
-chmod +x gw.py
+chmod +x src/gitwrapper/cli.py
 
-# Optional: Create alias or symlink
-ln -s $(pwd)/gw.py /usr/local/bin/gw
+# Create symlink
+ln -s $(pwd)/src/gitwrapper/cli.py /usr/local/bin/gw
 ```
 
 ## Usage
