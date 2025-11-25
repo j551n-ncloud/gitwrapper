@@ -106,6 +106,10 @@ class InteractiveGitWrapper:
             return f"{color}{text}{Colors.RESET}"
         return text
     
+    def emoji(self, emoji_char: str) -> str:
+        """Return emoji if enabled, empty string otherwise"""
+        return emoji_char if self.config['show_emoji'] else ""
+    
     def print_success(self, message: str):
         emoji = EMOJI_SUCCESS if self.config['show_emoji'] else ""
         print(self.colorize(f"{emoji}{message}", Colors.GREEN))
@@ -268,20 +272,27 @@ class InteractiveGitWrapper:
         """Display the main interactive menu"""
         while True:
             self.clear_screen()
-            repo_status = "🟢 Git Repository" if self.is_git_repo() else "🔴 Not a Git Repository"
+            emoji = self.config['show_emoji']
+            
+            repo_status_emoji = "🟢 " if emoji else ""
+            repo_status_text = "Git Repository" if self.is_git_repo() else "Not a Git Repository"
+            if not self.is_git_repo() and emoji:
+                repo_status_emoji = "🔴 "
+            
             current_dir = os.path.basename(os.getcwd())
             
             print("=" * 50)
-            print("🚀 Interactive Git Wrapper")
+            title = f"{'🚀 ' if emoji else ''}Interactive Git Wrapper"
+            print(title)
             print("=" * 50)
-            print(f"📁 Directory: {current_dir}")
-            print(f"📊 Status: {repo_status}")
+            print(f"{'📁 ' if emoji else ''}Directory: {current_dir}")
+            print(f"{'📊 ' if emoji else ''}Status: {repo_status_emoji}{repo_status_text}")
             print("=" * 50)
             
             if self.is_git_repo():
                 try:
                     branch = self.run_git_command(['git', 'branch', '--show-current'], capture_output=True)
-                    print(f"🌿 Current Branch: {branch}")
+                    print(f"{'🌿 ' if emoji else ''}Current Branch: {branch}")
                     
                     # Show ahead/behind status
                     status_info = self.get_branch_status()
@@ -290,15 +301,15 @@ class InteractiveGitWrapper:
                     
                     status = self.run_git_command(['git', 'status', '--porcelain'], capture_output=True)
                     if status:
-                        print(f"📝 Uncommitted Changes: {len(status.splitlines())} files")
+                        print(f"{'📝 ' if emoji else ''}Uncommitted Changes: {len(status.splitlines())} files")
                     else:
-                        print("📝 Working Directory: Clean")
+                        print(f"{'📝 ' if emoji else ''}Working Directory: Clean")
                     
                     # Show stash count
                     stash_list = self.run_git_command(['git', 'stash', 'list'], capture_output=True)
                     if stash_list:
                         stash_count = len(stash_list.splitlines())
-                        print(f"📦 Stashes: {stash_count}")
+                        print(f"{'📦 ' if emoji else ''}Stashes: {stash_count}")
                     
                     print("-" * 50)
                 except:
@@ -307,16 +318,30 @@ class InteractiveGitWrapper:
             # Menu options
             options = []
             if self.is_git_repo():
-                options.extend([
-                    "📊 Show Status", "➕ Add Files", "💾 Quick Commit", "🔄 Sync (Pull & Push)",
-                    "📤 Push Operations", "🌿 Branch Operations", "📋 View Changes", 
-                    "📜 View History", "🔗 Remote Management", "📦 Stash Operations",
-                    "🏷️  Tag Management", "↩️  Undo Operations", "🔍 Search History"
-                ])
+                if emoji:
+                    options.extend([
+                        "📊 Show Status", "➕ Add Files", "� Quick Commit", "🔄 Sync (Pull & Push)",
+                        "📤 Push Operations", "🌿 Branch Operations", "📋 View Changes", 
+                        "📜 View History", "🔗 Remote Management", "📦 Stash Operations",
+                        "🏷️  Tag Management", "↩️  Undo Operations", "🔍 Search History"
+                    ])
+                else:
+                    options.extend([
+                        "Show Status", "Add Files", "Quick Commit", "Sync (Pull & Push)",
+                        "Push Operations", "Branch Operations", "View Changes", 
+                        "View History", "Remote Management", "Stash Operations",
+                        "Tag Management", "Undo Operations", "Search History"
+                    ])
             else:
-                options.extend(["🎯 Initialize Repository", "📥 Clone Repository"])
+                if emoji:
+                    options.extend(["🎯 Initialize Repository", "📥 Clone Repository"])
+                else:
+                    options.extend(["Initialize Repository", "Clone Repository"])
             
-            options.extend(["⚙️ Configuration", "❓ Help", "🚪 Exit"])
+            if emoji:
+                options.extend(["⚙️ Configuration", "❓ Help", "🚪 Exit"])
+            else:
+                options.extend(["Configuration", "Help", "Exit"])
             
             for i, option in enumerate(options, 1):
                 print(f"  {i}. {option}")
@@ -332,7 +357,8 @@ class InteractiveGitWrapper:
                 self.print_error("Please enter a valid number!")
                 time.sleep(1)
             except KeyboardInterrupt:
-                print("\n\nGoodbye! 👋")
+                goodbye = f"\n\nGoodbye! {'👋' if self.config['show_emoji'] else ''}"
+                print(goodbye)
                 break
     
     def handle_menu_choice(self, choice: str):
@@ -355,7 +381,7 @@ class InteractiveGitWrapper:
             "Clone Repository": self.interactive_clone,
             "Configuration": self.interactive_config_menu,
             "Help": self.show_help,
-            "Exit": lambda: (print("\nGoodbye! 👋"), sys.exit(0))
+            "Exit": lambda: (print(f"\nGoodbye! {'👋' if self.config['show_emoji'] else ''}"), sys.exit(0))
         }
         
         for key, handler in handlers.items():
@@ -366,11 +392,11 @@ class InteractiveGitWrapper:
     def interactive_status(self):
         """Interactive status display"""
         self.clear_screen()
-        print("📊 Repository Status\n" + "=" * 30)
+        print(f"{self.emoji('📊 ')}Repository Status\n" + "=" * 30)
         
         branch = self.run_git_command(['git', 'branch', '--show-current'], capture_output=True)
         if branch:
-            print(f"🌿 Current branch: {branch}")
+            print(f"{self.emoji('🌿 ')}Current branch: {branch}")
             
             # Show ahead/behind
             status_info = self.get_branch_status()
@@ -378,17 +404,17 @@ class InteractiveGitWrapper:
                 print(f"   ↑ {status_info['ahead']} commits ahead")
                 print(f"   ↓ {status_info['behind']} commits behind")
         
-        print("\n📝 Working Directory Status:")
+        print(f"\n{self.emoji('📝 ')}Working Directory Status:")
         self.run_git_command(['git', 'status'])
         
         # Show stash list
         stash_list = self.run_git_command(['git', 'stash', 'list'], capture_output=True)
         if stash_list:
-            print(f"\n📦 Stashes ({len(stash_list.splitlines())}):")
+            print(f"\n{self.emoji('📦 ')}Stashes ({len(stash_list.splitlines())}):")
             for line in stash_list.splitlines()[:5]:
                 print(f"   {line}")
         
-        print(f"\n📜 Recent commits:")
+        print(f"\n{self.emoji('📜 ')}Recent commits:")
         self.run_git_command(['git', 'log', '--oneline', '--graph', '-5'])
         
         input("\nPress Enter to continue...")
@@ -396,7 +422,7 @@ class InteractiveGitWrapper:
     def interactive_add_files(self):
         """Interactive file adding"""
         self.clear_screen()
-        print("➕ Add Files\n" + "=" * 20)
+        print(f"{self.emoji('➕ ')}Add Files\n" + "=" * 20)
         
         status = self.run_git_command(['git', 'status', '--porcelain'], capture_output=True)
         if not status:
@@ -458,7 +484,8 @@ class InteractiveGitWrapper:
             h, w = stdscr.getmaxyx()
             
             # Header
-            header = "📁 Select Files to Add (Space=toggle, Enter=confirm, q=cancel)"
+            emoji_prefix = "📁 " if self.config['show_emoji'] else ""
+            header = f"{emoji_prefix}Select Files to Add (Space=toggle, Enter=confirm, q=cancel)"
             stdscr.addstr(0, 0, header[:w-1], curses.A_BOLD)
             stdscr.addstr(1, 0, "=" * min(len(header), w-1))
             stdscr.addstr(2, 0, "Use ↑↓ arrows to navigate, Space to select/deselect")
@@ -536,7 +563,7 @@ class InteractiveGitWrapper:
     def interactive_commit(self):
         """Interactive commit process"""
         self.clear_screen()
-        print("💾 Quick Commit\n" + "=" * 20)
+        print(f"{self.emoji('💾 ')}Quick Commit\n" + "=" * 20)
         
         status = self.run_git_command(['git', 'status', '--porcelain'], capture_output=True)
         if not status:
@@ -663,7 +690,7 @@ class InteractiveGitWrapper:
     def interactive_push_menu(self):
         """Interactive push operations menu"""
         self.clear_screen()
-        print("📤 Push Operations\n" + "=" * 20)
+        print(f"{self.emoji('📤 ')}Push Operations\n" + "=" * 20)
         
         remotes = self.get_remotes()
         if not remotes:
@@ -773,7 +800,7 @@ class InteractiveGitWrapper:
     def interactive_push_dry_run(self):
         """Preview what would be pushed"""
         self.clear_screen()
-        print("🔍 Push Dry Run\n" + "=" * 20)
+        print(f"{self.emoji('🔍 ')}Push Dry Run\n" + "=" * 20)
         
         remotes = self.get_remotes()
         current_branch = self.run_git_command(['git', 'branch', '--show-current'], capture_output=True)
@@ -791,7 +818,7 @@ class InteractiveGitWrapper:
     def interactive_sync(self):
         """Interactive sync process"""
         self.clear_screen()
-        print("🔄 Sync Repository\n" + "=" * 20)
+        print(f"{self.emoji('🔄 ')}Sync Repository\n" + "=" * 20)
         
         current_branch = self.run_git_command(['git', 'branch', '--show-current'], capture_output=True)
         branch = self.get_input("Branch to sync", current_branch or self.config['default_branch'])
@@ -835,7 +862,7 @@ class InteractiveGitWrapper:
         """Interactive stash operations menu"""
         while True:
             self.clear_screen()
-            print("📦 Stash Operations\n" + "=" * 25)
+            print(f"{self.emoji('📦 ')}Stash Operations\n" + "=" * 25)
             
             stash_list = self.run_git_command(['git', 'stash', 'list'], capture_output=True)
             if stash_list:
@@ -921,7 +948,7 @@ class InteractiveGitWrapper:
     def interactive_stash_list(self):
         """List all stashes"""
         self.clear_screen()
-        print("📦 All Stashes\n" + "=" * 15)
+        print(f"{self.emoji('📦 ')}All Stashes\n" + "=" * 15)
         self.run_git_command(['git', 'stash', 'list'])
         input("\nPress Enter to continue...")
     
@@ -962,7 +989,7 @@ class InteractiveGitWrapper:
         """Interactive tag management menu"""
         while True:
             self.clear_screen()
-            print("🏷️  Tag Management\n" + "=" * 25)
+            print(f"{self.emoji('🏷️  ')}Tag Management\n" + "=" * 25)
             
             tags = self.run_git_command(['git', 'tag'], capture_output=True)
             if tags:
@@ -1023,7 +1050,7 @@ class InteractiveGitWrapper:
     def interactive_tag_list(self):
         """List all tags with details"""
         self.clear_screen()
-        print("🏷️  All Tags\n" + "=" * 15)
+        print(f"{self.emoji('🏷️  ')}All Tags\n" + "=" * 15)
         self.run_git_command(['git', 'tag', '-n'])
         input("\nPress Enter to continue...")
     
@@ -1072,7 +1099,7 @@ class InteractiveGitWrapper:
         """Interactive undo operations menu"""
         while True:
             self.clear_screen()
-            print("↩️  Undo Operations\n" + "=" * 25)
+            print(f"{self.emoji('↩️  ')}Undo Operations\n" + "=" * 25)
             self.print_warning("Use these operations carefully!")
             print()
             
@@ -1147,14 +1174,14 @@ class InteractiveGitWrapper:
     def interactive_reflog(self):
         """View reflog"""
         self.clear_screen()
-        print("📜 Reflog (Recent HEAD movements)\n" + "=" * 35)
+        print(f"{self.emoji('📜 ')}Reflog (Recent HEAD movements)\n" + "=" * 35)
         self.run_git_command(['git', 'reflog', '-20'])
         input("\nPress Enter to continue...")
     
     def interactive_search_history(self):
         """Search command history"""
         self.clear_screen()
-        print("🔍 Command History\n" + "=" * 20)
+        print(f"{self.emoji('🔍 ')}Command History\n" + "=" * 20)
         
         if not self.history:
             self.print_info("No command history available")
@@ -1172,7 +1199,7 @@ class InteractiveGitWrapper:
         """Interactive remote management menu"""
         while True:
             self.clear_screen()
-            print("🔗 Remote Management\n" + "=" * 25)
+            print(f"{self.emoji('🔗 ')}Remote Management\n" + "=" * 25)
             
             remotes = self.get_remotes()
             if remotes:
@@ -1303,7 +1330,7 @@ class InteractiveGitWrapper:
     def interactive_list_remotes(self):
         """List all remotes with details"""
         self.clear_screen()
-        print("🔗 All Remotes\n" + "=" * 15)
+        print(f"{self.emoji('🔗 ')}All Remotes\n" + "=" * 15)
         self.run_git_command(['git', 'remote', '-v'])
         input("\nPress Enter to continue...")
     
@@ -1337,7 +1364,7 @@ class InteractiveGitWrapper:
         """Interactive branch operations menu"""
         while True:
             self.clear_screen()
-            print("🌿 Branch Operations\n" + "=" * 25)
+            print(f"{self.emoji('🌿 ')}Branch Operations\n" + "=" * 25)
             
             current_branch = self.run_git_command(['git', 'branch', '--show-current'], capture_output=True)
             if current_branch:
@@ -1413,7 +1440,7 @@ class InteractiveGitWrapper:
     def interactive_list_branches(self):
         """Interactive branch listing"""
         self.clear_screen()
-        print("🌿 All Branches\n" + "=" * 15)
+        print(f"{self.emoji('🌿 ')}All Branches\n" + "=" * 15)
         self.run_git_command(['git', 'branch', '-a'])
         input("\nPress Enter to continue...")
     
@@ -1477,13 +1504,13 @@ class InteractiveGitWrapper:
                                   ["Unstaged changes", "Staged changes", "Last commit"])
         
         if "Staged" in diff_type:
-            print("📋 Staged changes:")
+            print(f"{self.emoji('📋 ')}Staged changes:")
             self.run_git_command(['git', 'diff', '--cached'])
         elif "Last commit" in diff_type:
-            print("📋 Last commit changes:")
+            print(f"{self.emoji('📋 ')}Last commit changes:")
             self.run_git_command(['git', 'show', 'HEAD'])
         else:
-            print("📋 Unstaged changes:")
+            print(f"{self.emoji('📋 ')}Unstaged changes:")
             self.run_git_command(['git', 'diff'])
         
         input("\nPress Enter to continue...")
@@ -1502,7 +1529,7 @@ class InteractiveGitWrapper:
             ["Oneline", "Detailed", "Graph"]
         )
         
-        print(f"📜 Last {count} commits:")
+        print(f"{self.emoji('📜 ')}Last {count} commits:")
         
         if "Oneline" in log_format:
             self.run_git_command(['git', 'log', '--oneline', f'-{count}'])
@@ -1516,7 +1543,7 @@ class InteractiveGitWrapper:
     def interactive_init(self):
         """Interactive repository initialization"""
         self.clear_screen()
-        print("🎯 Initialize Repository\n" + "=" * 25)
+        print(f"{self.emoji('🎯 ')}Initialize Repository\n" + "=" * 25)
         
         if self.confirm("Initialize git repository in current directory?", True):
             self.print_working("Initializing repository...")
@@ -1545,7 +1572,7 @@ class InteractiveGitWrapper:
     def interactive_clone(self):
         """Interactive repository cloning"""
         self.clear_screen()
-        print("📥 Clone Repository\n" + "=" * 20)
+        print(f"{self.emoji('📥 ')}Clone Repository\n" + "=" * 20)
         
         url = self.get_input("Repository URL")
         if not url:
@@ -1580,7 +1607,7 @@ class InteractiveGitWrapper:
         """Interactive configuration menu"""
         while True:
             self.clear_screen()
-            print("⚙️ Configuration\n" + "=" * 20)
+            print(f"{self.emoji('⚙️ ')}Configuration\n" + "=" * 20)
             print(f"Name: {self.config['name'] or 'Not set'}")
             print(f"Email: {self.config['email'] or 'Not set'}")
             print(f"Default Branch: {self.config['default_branch']}")
@@ -1656,7 +1683,7 @@ class InteractiveGitWrapper:
     def show_help(self):
         """Show help information"""
         self.clear_screen()
-        print("❓ Git Wrapper Help\n" + "=" * 25)
+        print(f"{self.emoji('❓ ')}Git Wrapper Help\n" + "=" * 25)
         print("""
 🚀 Main Features:
 • Interactive menus for all operations
@@ -1760,7 +1787,7 @@ def main():
         try:
             git.show_main_menu()
         except KeyboardInterrupt:
-            print("\n\nGoodbye! 👋")
+            print(f"\n\nGoodbye! {'👋' if git.config['show_emoji'] else ''}")
 
 if __name__ == '__main__':
     main()
